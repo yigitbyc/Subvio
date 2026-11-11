@@ -1,0 +1,76 @@
+/* Orvyn tasarım token'ları — tüm renk, boşluk ve ölçüler buradan gelir. */
+:root {
+  /* Yüzeyler */
+  --color-bg: #0A0A0B;
+  --color-surface: #141416;
+  --color-surface-elevated: #1B1B1F;
+  --color-surface-hover: #242429;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
+  --color-overlay: rgba(0, 0, 0, 0.62);
+
+  /* Metin */
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted: #71717A;
+
+  /* Vurgu (kontrollü kullanılır) */
+  --color-accent: #FF8A32;
+  --color-accent-hover: #FF9B4D;
+  --color-accent-soft: rgba(255, 138, 50, 0.14);
+  --color-on-accent: #1A0D02;
+
+  /* Durum renkleri (turuncuyla karışmaz) */
+  --color-success: #39C980;
+  --color-warning: #F5B942;
+  --color-danger: #F06464;
+
+  /* Köşe yarıçapları */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 30px;
+  --radius-full: 999px;
+
+  /* Boşluklar */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Tipografi */
+  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  /* Hareket */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+
+  /* Yerleşim ölçüleri (responsive.css bunları cihaza göre günceller) */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: 58px;
+  --rail-w: 88px;
+  --sidebar-w: 248px;
+  --fab-size: 58px;
+  --page-pad: 16px;
+  --content-max: 1080px;
+  --page-bottom: calc(var(--nav-h) + var(--safe-bottom) + 36px);
+
+  /* Katmanlar */
+  --z-nav: 20;
+  --z-fab: 30;
+  --z-toast: 60;
+}
+

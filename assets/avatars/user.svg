@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1F1F24"/>
+      <stop offset="100%" stop-color="#121215"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9D42"/>
+      <stop offset="100%" stop-color="#FF6B00"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <rect width="120" height="120" rx="60" fill="url(#bgGrad)"/>
+  <circle cx="60" cy="60" r="57" fill="none" stroke="url(#accentGrad)" stroke-width="2" opacity="0.4"/>
+  <!-- Head & Hair -->
+  <circle cx="60" cy="46" r="22" fill="#E2E8F0"/>
+  <path d="M40 44 C40 28, 80 28, 80 44 C74 38, 46 38, 40 44 Z" fill="#0A0A0B"/>
+  <!-- Navigator Glasses / Visor -->
+  <rect x="44" y="44" width="32" height="10" rx="5" fill="#0A0A0B"/>
+  <rect x="46" y="46" width="28" height="6" rx="3" fill="url(#accentGrad)"/>
+  <!-- Shoulders / Jacket -->
+  <path d="M26 104 C26 78, 44 74, 60 74 C76 74, 94 78, 94 104 Z" fill="#18181D"/>
+  <path d="M46 76 L60 92 L74 76 Z" fill="url(#accentGrad)" opacity="0.9"/>
+  <path d="M54 84 L60 104 L66 84 Z" fill="#0A0A0B"/>
+</svg>
+

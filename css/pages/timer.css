@@ -1,0 +1,504 @@
+/* ==========================================================================
+   ORVYN - ODAK ZAMANLAYICI (POMODORO) PANELİ
+   Kullanıcının referans görseli ile 1:1 uyumlu kokpit kartı
+   ========================================================================== */
+
+.timer-page {
+  --timer-h: calc(100dvh - var(--page-pad) - var(--page-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: max(var(--timer-h), 560px);
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.timer-stage {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  background: #060608;
+  isolation: isolate;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.timer-scene {
+  position: absolute;
+  inset: 0;
+}
+.nav-scene {
+  width: 100%;
+  height: 100%;
+}
+
+/* Sürüş Sahnesi Kontrolleri ve Tam Ekran */
+.stage-fullscreen-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(18, 18, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #E2E2E6;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  z-index: 15;
+  transition: all var(--dur-fast) var(--ease-standard);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.stage-fullscreen-btn:hover {
+  background: rgba(30, 30, 36, 0.9);
+  border-color: rgba(255, 122, 26, 0.4);
+  color: #FF8A33;
+  transform: scale(1.05);
+}
+.stage-fullscreen-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Tam Ekran Modu */
+.timer-stage.is-stage-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  z-index: 999999 !important;
+  margin: 0 !important;
+}
+
+body.is-driving-fullscreen {
+  overflow: hidden !important;
+}
+
+.stage-fullscreen-hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #FFFFFF;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 122, 26, 0.2);
+  pointer-events: none;
+}
+
+.stage-fullscreen-hud__icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+}
+.stage-fullscreen-hud__icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.stage-fullscreen-hud__time {
+  font-family: var(--font-display, ui-monospace, monospace);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(255, 122, 26, 0.4);
+}
+
+.stage-fullscreen-hud__status {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  padding-left: 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.stage-fullscreen-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(18, 18, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #E2E2E6;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  cursor: pointer;
+  z-index: 25;
+  transition: all var(--dur-fast) var(--ease-standard);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+.stage-fullscreen-close-btn:hover {
+  background: rgba(36, 36, 44, 0.95);
+  border-color: rgba(255, 122, 26, 0.5);
+  color: #FF8A33;
+  transform: scale(1.05);
+}
+.stage-fullscreen-close-btn .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.timer-stage.is-stage-fullscreen .stage-fullscreen-btn {
+  display: none;
+}
+.timer-stage.is-stage-fullscreen .stage-fullscreen-hud {
+  display: flex;
+}
+.timer-stage.is-stage-fullscreen .stage-fullscreen-close-btn {
+  display: inline-flex;
+}
+
+/* ---------- Kullanıcının Görselindeki Alt Pomo Kartı ---------- */
+.pomo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 22px;
+  background: #121215;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* 1. Üst Görev Seçim Kapsülü */
+.pomo-task-selector-container {
+  position: relative;
+  width: 100%;
+}
+
+.pomo-task-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #1A1A1E;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  user-select: none;
+}
+.pomo-task-selector:hover {
+  background: #202026;
+  border-color: rgba(255, 138, 50, 0.25);
+}
+
+.pomo-task-selector__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pomo-task-selector__icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+.pomo-task-selector__icon .icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.3;
+}
+
+.pomo-task-selector__title {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: #E2E2E6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pomo-task-selector__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast);
+  flex-shrink: 0;
+}
+.pomo-task-selector__btn:hover {
+  background: rgba(255, 138, 50, 0.12);
+}
+
+.pomo-task-selector__chevron {
+  display: grid;
+  place-items: center;
+}
+.pomo-task-selector__chevron .icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.6;
+}
+
+/* Görev Seçim Açılır Menüsü */
+.pomo-task-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #18181D;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.pomo-task-menu[hidden] {
+  display: none !important;
+}
+
+.pomo-task-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  width: 100%;
+}
+.pomo-task-menu__item:hover {
+  background: rgba(255, 138, 50, 0.12);
+  color: #FFFFFF;
+}
+.pomo-task-menu__item.is-selected {
+  background: rgba(255, 138, 50, 0.16);
+  color: var(--color-accent);
+}
+.pomo-task-menu__item.is-done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.pomo-task-menu__item-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pomo-task-menu__item-name .icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.pomo-task-menu__empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 2. Orta Zaman ve Durum Satırı */
+.pomo-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+  gap: var(--space-3);
+}
+
+.pomo-time-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pomo-time-icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+.pomo-time-icon .icon {
+  width: 32px;
+  height: 32px;
+  stroke-width: 2.2;
+}
+
+.pomo-time-digits {
+  font-size: clamp(38px, 9vw, 52px);
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.pomo-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #1A1A1E;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.pomo-status-icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+}
+.pomo-status-icon .icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
+  transform: rotate(-10deg);
+}
+
+.pomo-status-text {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+/* 3. Alt Birincil ve İkincil Eylemler */
+.pomo-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.pomo-primary-btn {
+  flex: 1;
+  height: 52px;
+  border-radius: var(--radius-full) !important;
+  background: linear-gradient(135deg, #FF7A1A 0%, #E85500 100%) !important;
+  color: #0A0A0B !important;
+  font-size: 16px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 22px rgba(255, 107, 0, 0.38) !important;
+  border: none !important;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+.pomo-primary-btn:hover {
+  box-shadow: 0 8px 28px rgba(255, 107, 0, 0.5) !important;
+  transform: translateY(-1px);
+}
+.pomo-primary-btn .icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.6;
+}
+
+.pomo-secondary-btn {
+  height: 52px;
+  padding-inline: 18px;
+  border-radius: var(--radius-full) !important;
+  background: #1A1A1E !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  flex-shrink: 0;
+}
+.pomo-secondary-btn:hover {
+  background: #222228 !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+.pomo-secondary-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tablet ve Masaüstü Düzenleri */
+@media (min-width: 900px), (orientation: landscape) and (min-width: 560px) {
+  .timer-page {
+    flex-direction: row;
+    align-items: stretch;
+    max-width: 1040px;
+  }
+  .timer-stage {
+    min-height: 0;
+  }
+  .pomo-card {
+    flex: 0 0 clamp(320px, 36vw, 420px);
+    justify-content: center;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .timer-page {
+    min-height: 400px;
+  }
+  .pomo-time-digits {
+    font-size: 32px;
+  }
+  .pomo-card {
+    gap: 10px;
+    padding: 14px 16px;
+  }
+}

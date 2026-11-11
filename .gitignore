@@ -1,0 +1,13 @@
+﻿.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+scratch/
+ORVYN_MASTER_GELISTIRME_PROMPTU.md
