@@ -36,6 +36,7 @@ function sanitizeTask(raw) {
     scheduledStart: num(raw.scheduledStart),
     scheduledEnd: num(raw.scheduledEnd),
     completed: raw.completed === true,
+    inAutoRoute: raw.inAutoRoute === true,
     createdAt: num(raw.createdAt) ?? now,
     updatedAt: num(raw.updatedAt) ?? now,
   };
@@ -62,6 +63,12 @@ const DEFAULT_PROFILE = {
   name: 'Mert',
   title: 'Odak Yolcusu',
   avatar: 'assets/avatars/user.svg',
+  onboarded: false,
+};
+
+export const DEFAULT_TIMER_SETTINGS = {
+  focusMinutes: 25,
+  breakMinutes: 5,
 };
 
 /* ---------- Başlatma / abonelik ---------- */
@@ -72,6 +79,17 @@ export function initState() {
     ? { ...DEFAULT_PROFILE, ...rawProfile }
     : DEFAULT_PROFILE;
 
+  const rawTimerSettings = read(KEYS.timerSettings);
+  const timerSettings = rawTimerSettings && typeof rawTimerSettings === 'object'
+    ? {
+        focusMinutes: Math.max(1, Math.min(180, Number(rawTimerSettings.focusMinutes) || DEFAULT_TIMER_SETTINGS.focusMinutes)),
+        breakMinutes: Math.max(1, Math.min(60, Number(rawTimerSettings.breakMinutes) || DEFAULT_TIMER_SETTINGS.breakMinutes)),
+      }
+    : DEFAULT_TIMER_SETTINGS;
+
+  TIMER_CONFIG.durations.focus = timerSettings.focusMinutes * 60;
+  TIMER_CONFIG.durations.break = timerSettings.breakMinutes * 60;
+
   if (rawTasks == null) {
     state = {
       tasks: [],
@@ -79,6 +97,7 @@ export function initState() {
       currentPage: DEFAULT_PAGE,
       timer: sanitizeTimer(read(KEYS.timer)),
       profile,
+      timerSettings,
     };
     loadDemoData();
     return state;
@@ -94,6 +113,7 @@ export function initState() {
     currentPage: DEFAULT_PAGE,
     timer: sanitizeTimer(read(KEYS.timer)),
     profile,
+    timerSettings,
   };
   return state;
 }
@@ -111,12 +131,53 @@ function commit(changes, persist = []) {
   if (persist.includes('activeTask')) write(KEYS.activeTask, state.activeTaskId);
   if (persist.includes('timer')) write(KEYS.timer, state.timer);
   if (persist.includes('profile')) write(KEYS.profile, state.profile);
+  if (persist.includes('timerSettings')) write(KEYS.timerSettings, state.timerSettings);
   listeners.forEach((fn) => fn(state));
 }
 
 export function updateProfile(changes) {
   const profile = { ...(state?.profile ?? DEFAULT_PROFILE), ...changes };
   commit({ profile }, ['profile']);
+}
+
+export function updateTimerSettings(changes) {
+  const current = state?.timerSettings ?? DEFAULT_TIMER_SETTINGS;
+  const focusMinutes = Math.max(1, Math.min(180, Number(changes.focusMinutes) || current.focusMinutes));
+  const breakMinutes = Math.max(1, Math.min(60, Number(changes.breakMinutes) || current.breakMinutes));
+  const timerSettings = { focusMinutes, breakMinutes };
+
+  TIMER_CONFIG.durations.focus = focusMinutes * 60;
+  TIMER_CONFIG.durations.break = breakMinutes * 60;
+
+  let timer = state.timer;
+  if (timer.status === 'idle') {
+    const isBreak = timer.mode === 'break';
+    const task = getCurrentTask(state);
+    const newDur = isBreak
+      ? TIMER_CONFIG.durations.break
+      : (task?.durationMinutes ? task.durationMinutes * 60 : TIMER_CONFIG.durations.focus);
+    timer = { ...timer, durationSeconds: newDur };
+  }
+
+  commit({ timerSettings, timer }, ['timerSettings', 'timer']);
+}
+
+export function isFirstVisit() {
+  const hasOnboarded = read(KEYS.onboarded);
+  if (hasOnboarded === true) return false;
+  const rawProfile = read(KEYS.profile);
+  if (rawProfile?.onboarded) return false;
+  // Kullanıcının kayıtlı ismi veya mevcut görevleri varsa ilk defa gelmiyor demektir
+  if (rawProfile?.name && rawProfile.name.trim() !== '') return false;
+  const rawTasks = read(KEYS.tasks);
+  if (Array.isArray(rawTasks) && rawTasks.length > 0) return false;
+  return true;
+}
+
+export function completeOnboarding(name) {
+  const cleanName = String(name || '').trim() || 'Mert';
+  updateProfile({ name: cleanName, onboarded: true });
+  write(KEYS.onboarded, true);
 }
 
 /* ---------- Seçiciler ---------- */
@@ -146,6 +207,7 @@ export function addTask({ title, description = '', durationMinutes = null, sched
     scheduledStart,
     scheduledEnd,
     completed: false,
+    inAutoRoute: false,
     createdAt: now,
     updatedAt: now,
   };
@@ -226,7 +288,7 @@ export function loadDemoData() {
     },
     {
       id: newId(),
-      title: 'Orvyn Tasarım Sistemi İyileştirmeleri',
+      title: 'Subvio Tasarım Sistemi İyileştirmeleri',
       description: 'Siyah-turuncu premium bileşenleri ve adaptif yerleşim detaylarını optimize et.',
       durationMinutes: 30,
       scheduledStart: todayAt(11, 0),
@@ -286,13 +348,13 @@ export function resetAllData() {
 
 /**
  * Otomatik Akıllı Rota Oluşturucu:
- * Seçilen görevleri başlangıç saatinden itibaren Pomodoro ve mola sürelerine göre sıralı bir günlük rotaya dönüştürür.
+ * Seçilen görevleri başlangıç saatinden itibaren görevlerin kendi sürelerine (veya varsayılan Pomodoro süresine)
+ * ve mola sürelerine göre sıralı, mantık hatasız gerçekçi bir günlük rotaya dönüştürür.
  */
-export function buildAutoRoute({ taskIds, startTimestamp, pomodoroMinutes = 25, breakMinutes = 5 }) {
+export function buildAutoRoute({ taskIds, startTimestamp, pomodoroMinutes = 25, breakMinutes = 5, overrideCustomDurations = false }) {
   if (!Array.isArray(taskIds) || !taskIds.length) return false;
 
   let cursor = startTimestamp;
-  const pomoMs = pomodoroMinutes * 60 * 1000;
   const breakMs = breakMinutes * 60 * 1000;
 
   const taskMap = new Map();
@@ -300,20 +362,29 @@ export function buildAutoRoute({ taskIds, startTimestamp, pomodoroMinutes = 25, 
     const task = state.tasks.find((t) => t.id === id);
     if (!task) return;
 
+    // Kullanıcının görev eklerken belirlediği süreyi KORU (mantık hatasını önle)
+    const effectiveMins = (!overrideCustomDurations && Number(task.durationMinutes) > 0)
+      ? task.durationMinutes
+      : (pomodoroMinutes || 25);
+
+    const taskMs = effectiveMins * 60 * 1000;
     const scheduledStart = cursor;
-    const scheduledEnd = cursor + pomoMs;
+    const scheduledEnd = cursor + taskMs;
     cursor = scheduledEnd + breakMs;
 
     taskMap.set(id, {
       ...task,
-      durationMinutes: pomodoroMinutes,
+      durationMinutes: effectiveMins,
       scheduledStart,
       scheduledEnd,
+      inAutoRoute: true,
       updatedAt: Date.now(),
     });
   });
 
-  const updatedTasks = state.tasks.map((t) => taskMap.get(t.id) ?? t);
+  // Sadece otomatik rota oluşturucu ile seçilen görevler Rota Zaman Çizelgesi'nde yer alır
+  const updatedTasks = state.tasks.map((t) =>
+    taskMap.get(t.id) ?? (t.inAutoRoute ? { ...t, inAutoRoute: false } : t));
 
   commit({
     tasks: updatedTasks,

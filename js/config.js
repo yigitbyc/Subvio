@@ -11,12 +11,12 @@ function seconds(name, fallback) {
   return Number.isFinite(v) && v >= 1 ? Math.floor(v) : fallback;
 }
 
-export const TIMER_CONFIG = Object.freeze({
-  durations: Object.freeze({
-    focus: seconds('focusSeconds', 25 * 60), // GEÇİCİ varsayılan
-    break: seconds('breakSeconds', 5 * 60), //  GEÇİCİ varsayılan (tek tür mola)
-  }),
-});
+export const TIMER_CONFIG = {
+  durations: {
+    focus: seconds('focusSeconds', 25 * 60),
+    break: seconds('breakSeconds', 5 * 60),
+  },
+};
 
 export const STORAGE_VERSION = 1;
 

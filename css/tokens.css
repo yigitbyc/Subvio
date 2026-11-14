@@ -25,12 +25,12 @@
   --color-warning: #F5B942;
   --color-danger: #F06464;
 
-  /* Köşe yarıçapları */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-2xl: 30px;
+  /* Köşe yarıçapları (Daha yuvarlak, akıcı ve modern) */
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 26px;
+  --radius-xl: 32px;
+  --radius-2xl: 38px;
   --radius-full: 999px;
 
   /* Boşluklar */

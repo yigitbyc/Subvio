@@ -6,6 +6,8 @@ export const KEYS = Object.freeze({
   activeTask: 'orvyn:active-task',
   timer: 'orvyn:timer-state',
   profile: 'orvyn:user-profile',
+  timerSettings: 'orvyn:timer-settings',
+  onboarded: 'orvyn:onboarded',
 });
 
 export function read(key) {

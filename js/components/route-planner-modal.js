@@ -17,20 +17,22 @@ function defaultTimeString(date = new Date()) {
 
 export function openRoutePlannerModal() {
   let state = getState();
-  let tasks = state.tasks.filter((t) => !t.completed);
-  if (!tasks.length) tasks = state.tasks;
+  const tasks = state.tasks.filter((t) => !t.completed);
 
   const selectedIds = new Set(tasks.map((t) => t.id));
 
   // Form kontrolleri
   const startInput = h('input', { class: 'input', type: 'time', value: defaultTimeString() });
-  const endInput = h('input', { class: 'input', type: 'time', value: '18:00' });
+  const endInput = h('input', { class: 'input', type: 'time', value: '18:00', readonly: true, title: 'Otomatik hesaplanan rota bitiş saati' });
   const pomoSelect = h('select', { class: 'input' },
-    h('option', { value: '25', selected: true }, '25 dk (Klasik Pomodoro)'),
-    h('option', { value: '30' }, '30 dk (Geniş Odak)'),
-    h('option', { value: '45' }, '45 dk (Derin Odak)'),
-    h('option', { value: '50' }, '50 dk (Çift Seans)'),
-    h('option', { value: '15' }, '15 dk (Hızlı Sprint)'));
+    h('option', { value: 'preserve', selected: true }, 'Görevlerin Kendi Süresini Koru (Önerilen)'),
+    h('option', { value: '25' }, 'Eksik Süreliler İçin: 25 dk (Klasik Pomodoro)'),
+    h('option', { value: '30' }, 'Eksik Süreliler İçin: 30 dk (Geniş Odak)'),
+    h('option', { value: '45' }, 'Eksik Süreliler İçin: 45 dk (Derin Odak)'),
+    h('option', { value: '15' }, 'Eksik Süreliler İçin: 15 dk (Hızlı Sprint)'),
+    h('option', { value: 'force-25' }, 'Tüm Görevleri 25 dk Yap'),
+    h('option', { value: 'force-30' }, 'Tüm Görevleri 30 dk Yap'),
+    h('option', { value: 'force-45' }, 'Tüm Görevleri 45 dk Yap'));
 
   const breakSelect = h('select', { class: 'input' },
     h('option', { value: '5', selected: true }, '5 dk Kısa Mola'),
@@ -40,13 +42,38 @@ export function openRoutePlannerModal() {
   const summaryEl = h('div', { class: 'route-planner-summary' });
 
   function updateSummary() {
+    state = getState();
     const count = selectedIds.size;
-    const pomo = Number(pomoSelect.value);
-    const brk = Number(breakSelect.value);
-    const totalMinutes = count * pomo + Math.max(0, count - 1) * brk;
+    const mode = pomoSelect.value;
+    const isForce = mode.startsWith('force-');
+    const forcedPomo = isForce ? Number(mode.replace('force-', '')) : null;
+    const fallbackPomo = (!isForce && mode !== 'preserve') ? Number(mode) : 25;
+    const brk = Number(breakSelect.value) || 5;
+
+    let totalFocusMinutes = 0;
+    selectedIds.forEach((id) => {
+      const t = state.tasks.find((task) => task.id === id);
+      if (!t) return;
+      if (isForce) {
+        totalFocusMinutes += forcedPomo;
+      } else {
+        totalFocusMinutes += (Number(t.durationMinutes) > 0 ? t.durationMinutes : fallbackPomo);
+      }
+    });
+
+    const totalBreakMinutes = Math.max(0, count - 1) * brk;
+    const totalMinutes = totalFocusMinutes + totalBreakMinutes;
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
     const timeStr = hours > 0 ? `${hours} sa ${mins} dk` : `${mins} dk`;
+
+    // Görev süreleri ve molalar toplanarak gerçekçi bitiş saati hesaplanır
+    const startTs = timeInputToTimestamp(startInput.value) ?? Date.now();
+    const plannedEndTs = startTs + totalMinutes * 60 * 1000;
+    const plannedEndDate = new Date(plannedEndTs);
+    const pad = (n) => String(n).padStart(2, '0');
+    endInput.value = `${pad(plannedEndDate.getHours())}:${pad(plannedEndDate.getMinutes())}`;
+
     summaryEl.replaceChildren(
       h('div', { class: 'badge badge--accent' }, icon('route'), `${count} Durak Seçildi`),
       h('span', { class: 'meta__item' }, icon('clock'), `Toplam ${timeStr}`),
@@ -59,13 +86,12 @@ export function openRoutePlannerModal() {
   function renderTasks() {
     taskListEl.replaceChildren();
     state = getState();
-    let currentTasks = state.tasks.filter((t) => !t.completed);
-    if (!currentTasks.length) currentTasks = state.tasks;
+    const currentTasks = state.tasks.filter((t) => !t.completed);
 
     if (!currentTasks.length) {
       taskListEl.replaceChildren(
         h('div', { class: 'route-planner-empty' },
-          h('p', { class: 'meta' }, 'Listede henüz görev bulunmuyor.'),
+          h('p', { class: 'meta' }, 'Tamamlanmamış görev bulunmuyor.'),
           h('button', {
             class: 'btn btn--secondary btn--sm',
             type: 'button',
@@ -73,7 +99,7 @@ export function openRoutePlannerModal() {
               loadDemoData();
               showToast('Demo görevleri yüklendi');
               state = getState();
-              state.tasks.forEach((t) => selectedIds.add(t.id));
+              state.tasks.filter((t) => !t.completed).forEach((t) => selectedIds.add(t.id));
               renderTasks();
             },
           }, icon('sparkles'), 'Örnek Görevleri Yükle')));
@@ -94,12 +120,21 @@ export function openRoutePlannerModal() {
         },
       });
 
+      const mode = pomoSelect.value;
+      const isForce = mode.startsWith('force-');
+      const displayDuration = isForce
+        ? Number(mode.replace('force-', ''))
+        : (t.durationMinutes || (mode !== 'preserve' ? Number(mode) : 25));
+
       const li = h('li', { class: `route-planner-task-item${isChecked ? ' is-selected' : ''}` },
         h('label', { for: `rp-task-${t.id}`, class: 'route-planner-task-label' },
           cb,
           h('div', { class: 'route-planner-task-info' },
-            h('span', { class: 'route-planner-task-title' }, t.title),
-            t.durationMinutes ? h('span', { class: 'meta__item' }, `${t.durationMinutes} dk`) : null)));
+            h('span', { class: 'route-planner-task-title' }, t.title)),
+          h('span', {
+            class: 'badge badge--accent',
+            style: 'margin-left: auto; font-weight: 700; font-size: 12px; padding: 3px 10px;',
+          }, `${displayDuration} dk`)));
       taskListEl.append(li);
     });
     updateSummary();
@@ -118,7 +153,8 @@ export function openRoutePlannerModal() {
     },
   }, 'Tümünü Seç / Temizle');
 
-  pomoSelect.addEventListener('change', updateSummary);
+  startInput.addEventListener('input', updateSummary);
+  pomoSelect.addEventListener('change', () => { renderTasks(); updateSummary(); });
   breakSelect.addEventListener('change', updateSummary);
 
   const close = () => {
@@ -193,14 +229,18 @@ export function openRoutePlannerModal() {
           }
 
           const startTs = timeInputToTimestamp(startInput.value) ?? Date.now();
-          const pomo = Number(pomoSelect.value);
-          const brk = Number(breakSelect.value);
+          const mode = pomoSelect.value;
+          const isForce = mode.startsWith('force-');
+          const forcedPomo = isForce ? Number(mode.replace('force-', '')) : null;
+          const fallbackPomo = (!isForce && mode !== 'preserve') ? Number(mode) : 25;
+          const brk = Number(breakSelect.value) || 5;
 
           buildAutoRoute({
             taskIds: Array.from(selectedIds),
             startTimestamp: startTs,
-            pomodoroMinutes: pomo,
+            pomodoroMinutes: isForce ? forcedPomo : fallbackPomo,
             breakMinutes: brk,
+            overrideCustomDurations: isForce,
           });
 
           close();

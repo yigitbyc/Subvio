@@ -95,7 +95,7 @@ export function mount(root) {
           }))),
       // Hoş Geldiniz & Kullanıcı Adı
       h('div', { class: 'home-welcome__text-wrap' },
-        h('div', { class: 'home-welcome__badge' }, icon('sparkles'), 'ORVYN ODAK KOKPİTİ'),
+        h('div', { class: 'home-welcome__badge' }, icon('sparkles'), 'SUBVIO ODAK KOKPİTİ'),
         h('h1', { class: 'home-welcome__title' }, `Hoş Geldiniz, ${userName}`),
         h('p', { class: 'home-welcome__desc' }, welcomeDesc)),
       // Butonlar

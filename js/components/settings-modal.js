@@ -1,8 +1,7 @@
 import { h } from '../utils/dom.js';
 import { icon } from './icons.js';
-import { getState, updateProfile, loadDemoData, resetAllData } from '../state.js';
+import { getState, updateProfile, updateTimerSettings, loadDemoData, resetAllData } from '../state.js';
 import { showToast } from './toast.js';
-import { TIMER_CONFIG } from '../config.js';
 
 let dialog = null;
 
@@ -16,6 +15,73 @@ function build() {
     }
     document.body.classList.remove('is-modal-open');
   };
+
+  const state = getState();
+  const currentFocus = state?.timerSettings?.focusMinutes || 25;
+  const currentBreak = state?.timerSettings?.breakMinutes || 5;
+
+  const focusInput = h('input', {
+    class: 'input',
+    id: 'settings-focus-minutes',
+    type: 'number',
+    min: '1',
+    max: '180',
+    value: String(currentFocus),
+    style: 'text-align: center; font-weight: 700; font-size: 15px;',
+    onInput: (e) => {
+      const val = Math.max(1, Math.min(180, Number(e.target.value) || 25));
+      updateTimerSettings({ focusMinutes: val });
+      updateSummaryBadge();
+    },
+  });
+
+  const breakInput = h('input', {
+    class: 'input',
+    id: 'settings-break-minutes',
+    type: 'number',
+    min: '1',
+    max: '60',
+    value: String(currentBreak),
+    style: 'text-align: center; font-weight: 700; font-size: 15px;',
+    onInput: (e) => {
+      const val = Math.max(1, Math.min(60, Number(e.target.value) || 5));
+      updateTimerSettings({ breakMinutes: val });
+      updateSummaryBadge();
+    },
+  });
+
+  const focusPresetValues = [15, 20, 25, 45, 60];
+  const breakPresetValues = [5, 10, 15, 20];
+
+  const focusChips = focusPresetValues.map((mins) => h('button', {
+    class: 'task-preset-chip',
+    type: 'button',
+    onClick: () => {
+      focusInput.value = String(mins);
+      updateTimerSettings({ focusMinutes: mins });
+      updateSummaryBadge();
+    },
+  }, `${mins} dk`));
+
+  const breakChips = breakPresetValues.map((mins) => h('button', {
+    class: 'task-preset-chip',
+    type: 'button',
+    onClick: () => {
+      breakInput.value = String(mins);
+      updateTimerSettings({ breakMinutes: mins });
+      updateSummaryBadge();
+    },
+  }, `${mins} dk`));
+
+  const summaryBadge = h('div', { style: 'display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: 6px;' });
+
+  function updateSummaryBadge() {
+    const s = getState()?.timerSettings || { focusMinutes: 25, breakMinutes: 5 };
+    summaryBadge.replaceChildren(
+      h('span', { class: 'badge badge--accent' }, `Odak: ${s.focusMinutes} dk`),
+      h('span', { class: 'badge' }, `Mola: ${s.breakMinutes} dk`));
+  }
+  updateSummaryBadge();
 
   const panel = h('div', { class: 'modal__panel', role: 'document' },
     h('header', { class: 'modal__header' },
@@ -40,7 +106,7 @@ function build() {
             class: 'input',
             id: 'settings-user-name',
             type: 'text',
-            value: getState()?.profile?.name || 'Mert',
+            value: getState()?.profile?.name || '',
             placeholder: 'Adınız',
             onInput: (e) => {
               const val = e.target.value.trim();
@@ -48,18 +114,25 @@ function build() {
             },
           }))),
 
-      // Pomodoro süreleri bilgi alanı
+      // Pomodoro süreleri ayarlanabilir alan
       h('section', { class: 'card card--elevated', style: 'padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);' },
         h('h3', { style: 'font-size: var(--text-md); font-weight: 650; display: flex; align-items: center; gap: 8px;' }, icon('clock'), 'Pomodoro Seans Süreleri'),
-        h('p', { class: 'meta', style: 'line-height: 1.5;' }, 'Mevcut seans yapılandırması:'),
-        h('div', { style: 'display: flex; gap: var(--space-3); flex-wrap: wrap;' },
-          h('span', { class: 'badge badge--accent' }, `Odak: ${Math.round(TIMER_CONFIG.durations.focus / 60)} dk`),
-          h('span', { class: 'badge' }, `Mola: ${Math.round(TIMER_CONFIG.durations.break / 60)} dk`))),
+        h('p', { class: 'meta', style: 'line-height: 1.5;' }, 'Varsayılan odaklanma ve mola sürelerinizi ayarlayın:'),
+        h('div', { class: 'task-time-row', style: 'margin-top: 4px;' },
+          h('div', { class: 'field' },
+            h('label', { class: 'field__label', for: 'settings-focus-minutes' }, 'Odak Süresi (dk)'),
+            focusInput,
+            h('div', { class: 'task-preset-chips', style: 'flex-wrap: wrap; justify-content: flex-start;' }, ...focusChips)),
+          h('div', { class: 'field' },
+            h('label', { class: 'field__label', for: 'settings-break-minutes' }, 'Mola Süresi (dk)'),
+            breakInput,
+            h('div', { class: 'task-preset-chips', style: 'flex-wrap: wrap; justify-content: flex-start;' }, ...breakChips))),
+        summaryBadge),
 
       // Demo ve Test Verisi
       h('section', { class: 'card card--elevated', style: 'padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);' },
         h('h3', { style: 'font-size: var(--text-md); font-weight: 650; display: flex; align-items: center; gap: 8px;' }, icon('sparkles'), 'Demo ve Test Verisi'),
-        h('p', { class: 'meta', style: 'line-height: 1.5;' }, 'Orvyn\'i dolu bir günlük rota ve görev listesiyle anında deneyimlemek için örnek verileri yükleyin.'),
+        h('p', { class: 'meta', style: 'line-height: 1.5;' }, 'Subvio\'yu dolu bir günlük rota ve görev listesiyle anında deneyimlemek için örnek verileri yükleyin.'),
         h('div', { style: 'display: flex; gap: var(--space-3); flex-wrap: wrap;' },
           h('button', {
             class: 'btn btn--secondary btn--sm',
@@ -85,7 +158,7 @@ function build() {
 
       // Uygulama Hakkında
       h('section', { style: 'display: flex; flex-direction: column; gap: 4px; padding: var(--space-2);' },
-        h('span', { style: 'font-size: var(--text-xs); color: var(--color-text-muted);' }, 'Orvyn · v1.0'),
+        h('span', { style: 'font-size: var(--text-xs); color: var(--color-text-muted);' }, 'Subvio · v1.0'),
         h('span', { style: 'font-size: var(--text-xs); color: var(--color-text-muted);' }, 'Navigasyon tabanlı odaklanma ve günlük rota yönetimi.'))),
     h('footer', { class: 'modal__footer' },
       h('button', { class: 'btn btn--primary', type: 'button', 'data-action': 'close', onClick: () => close() }, 'Tamam')));
@@ -112,9 +185,13 @@ function build() {
 }
 
 export function openSettingsModal() {
-  if (!dialog) build();
-  if (dialog.open) return;
+  if (dialog) {
+    dialog.remove();
+    dialog = null;
+  }
+  build();
   document.body.classList.add('is-modal-open');
-  dialog.showModal();
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
 }
 

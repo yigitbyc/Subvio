@@ -4,12 +4,13 @@ import { formatMinutes, formatSchedule } from '../utils/time.js';
 
 /** Görev durumu: yalnızca renkle değil metin + ikonla anlatılır. */
 export function taskStatus(task, state) {
-  const { timer } = state;
+  if (!task) return { key: 'queued', label: 'Sırada', icon: 'clock', cls: '' };
+  const timer = state?.timer;
   if (task.completed) return { key: 'done', label: 'Tamamlandı', icon: 'check', cls: 'badge--success' };
-  if (timer.mode === 'focus' && timer.taskId === task.id && ['running', 'paused'].includes(timer.status)) {
+  if (timer && timer.mode === 'focus' && timer.taskId === task.id && ['running', 'paused'].includes(timer.status)) {
     return { key: 'focus', label: timer.status === 'running' ? 'Odakta' : 'Duraklatıldı', icon: 'navigation', cls: 'badge--accent' };
   }
-  if (state.activeTaskId === task.id) return { key: 'active', label: 'Aktif', icon: 'target', cls: 'badge--accent' };
+  if (state?.activeTaskId === task.id) return { key: 'active', label: 'Aktif', icon: 'target', cls: 'badge--accent' };
   return { key: 'queued', label: 'Sırada', icon: 'clock', cls: '' };
 }
 
@@ -101,7 +102,9 @@ export function createTaskGridCard({ task, state, isCurrent, justToggled, onTogg
   if (task.completed) {
     badgeEl = h('span', { class: 'badge badge--success' }, icon('check'), 'Bitti');
   } else if (isCurrent) {
-    badgeEl = h('span', { class: 'badge badge--accent' }, icon('target'), 'Aktif');
+    badgeEl = h('div', { style: 'display: inline-flex; align-items: center; gap: 6px;' },
+      h('span', { class: 'badge badge--accent' }, icon('target'), 'Aktif'),
+      h('span', { class: 'task-card-item__pill' }, icon('clock'), durationText));
   } else {
     badgeEl = h('span', { class: 'task-card-item__pill' }, icon('clock'), durationText);
   }

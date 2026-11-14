@@ -17,13 +17,15 @@ export function formatMinutes(minutes) {
 
 /** timestamp → "09:30" (yerel saat) */
 export function formatHM(ts) {
+  if (ts == null || !Number.isFinite(ts)) return '';
   const d = new Date(ts);
+  if (isNaN(d.getTime())) return '';
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** "09:30" → bugünün yerel saatiyle timestamp; geçersizse null */
 export function timeInputToTimestamp(value) {
-  const m = /^(\d{2}):(\d{2})$/.exec(value ?? '');
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(value ?? '').trim());
   if (!m) return null;
   const d = new Date();
   d.setHours(Number(m[1]), Number(m[2]), 0, 0);
@@ -32,9 +34,11 @@ export function timeInputToTimestamp(value) {
 
 /** Planlanan saat aralığını okunur metne çevirir; yoksa null */
 export function formatSchedule(start, end) {
-  if (start != null && end != null) return `${formatHM(start)} – ${formatHM(end)}`;
-  if (start != null) return `${formatHM(start)} başlangıç`;
-  if (end != null) return `${formatHM(end)} bitiş`;
+  const validStart = typeof start === 'number' && Number.isFinite(start);
+  const validEnd = typeof end === 'number' && Number.isFinite(end);
+  if (validStart && validEnd) return `${formatHM(start)} – ${formatHM(end)}`;
+  if (validStart) return `${formatHM(start)} başlangıç`;
+  if (validEnd) return `${formatHM(end)} bitiş`;
   return null;
 }
 

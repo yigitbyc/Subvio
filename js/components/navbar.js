@@ -18,9 +18,14 @@ export function createNavbar(root) {
   const brandSquircle = h('a', {
     class: 'nav__brand-squircle',
     href: '#/home',
-    title: 'Orvyn Odak Kokpiti',
-    'aria-label': 'Ana Sayfa',
-  }, icon('logoSparkle'));
+    title: 'Subvio Odak Kokpiti',
+    'aria-label': 'Subvio Ana Sayfa',
+  },
+    h('img', {
+      class: 'nav__brand-logo-img',
+      src: 'assets/subvio-logo.png',
+      alt: 'Subvio Logo',
+    }));
 
   // 2. Ana Navigasyon Kapsülü (Sadece 3 temel sayfa)
   const links = [

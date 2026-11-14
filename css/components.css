@@ -177,15 +177,17 @@ textarea.input { min-height: 84px; line-height: 1.45; }
   z-index: 999;
 }
 
-body:has(dialog[open]) .nav-dock,
-body.is-modal-open .nav-dock {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: translate(-50%, 20px) !important;
-  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+@media (max-width: 599.98px) {
+  body:has(dialog[open]) .nav-dock,
+  body.is-modal-open .nav-dock {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translate(-50%, 20px) !important;
+    transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
 }
 
-.modal__panel { display: flex; flex-direction: column; height: 100%; max-height: min(88dvh, 720px); min-height: 0; width: 100%; }
+.modal__panel { display: flex; flex-direction: column; height: 100%; max-height: min(88dvh, 720px); min-height: 0; width: 100%; border-radius: inherit; overflow: hidden; }
 .modal__header {
   flex-shrink: 0;
   display: flex;

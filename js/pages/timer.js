@@ -399,6 +399,7 @@ export function mount(root) {
 
   return () => {
     unsubscribe();
+    document.body.classList.remove('is-driving-fullscreen');
     document.removeEventListener('click', onDocClick);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     window.removeEventListener('keydown', onKeyDown);
