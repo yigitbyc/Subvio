@@ -259,6 +259,7 @@ export function openRoutePlannerModal() {
       close();
       return;
     }
+    if (e.target !== dialog || e.detail === 0) return;
     const rect = dialog.getBoundingClientRect();
     const isInDialog = (
       rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&

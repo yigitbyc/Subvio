@@ -23,7 +23,7 @@ export function mount(root) {
     const activeTask = timer.mode === 'focus' ? getTaskById(state, timer.taskId) : null;
     const effectiveTask = activeTask || current || (total ? state.tasks[0] : null);
     const progressPercent = total > 0 ? Math.round((done.length / total) * 100) : 0;
-    const userName = profile?.name || 'Mert';
+    const userName = profile?.name || 'Odak Yolcusu';
 
     // 1. Zarif Üst Bar (Topbar: Sol Tarafta Tarih/Durum Rozetleri, Sağ Tarafta Orantılı Ayarlar Butonu)
     const header = h('header', { class: 'home-topbar' },
@@ -101,7 +101,15 @@ export function mount(root) {
       // Butonlar
       h('div', { class: 'home-welcome__actions' },
         primaryActionBtn,
-        secondaryActionBtn));
+        secondaryActionBtn,
+        total === 0 ? h('button', {
+          class: 'btn btn--ghost btn--lg',
+          type: 'button',
+          onClick: () => {
+            loadDemoData();
+            showToast('Demo verileri yüklendi');
+          },
+        }, icon('sparkles'), 'Demo Verilerini Yükle') : null));
 
     // 3. Kullanıcının İşaretlediği 4'lü Özet İstatistik Kartları (2x2 Grid)
     const totalFocusMinutes = state.tasks.reduce((acc, t) => acc + (t.durationMinutes || 25), 0);

@@ -60,7 +60,7 @@ function sanitizeTimer(raw) {
 }
 
 const DEFAULT_PROFILE = {
-  name: 'Mert',
+  name: 'Odak Yolcusu',
   title: 'Odak Yolcusu',
   avatar: 'assets/avatars/user.svg',
   onboarded: false,
@@ -99,7 +99,7 @@ export function initState() {
       profile,
       timerSettings,
     };
-    loadDemoData();
+    write(KEYS.tasks, []);
     return state;
   }
 
@@ -175,7 +175,7 @@ export function isFirstVisit() {
 }
 
 export function completeOnboarding(name) {
-  const cleanName = String(name || '').trim() || 'Mert';
+  const cleanName = String(name || '').trim() || 'Odak Yolcusu';
   updateProfile({ name: cleanName, onboarded: true });
   write(KEYS.onboarded, true);
 }
@@ -332,9 +332,15 @@ export function loadDemoData() {
     },
   ];
 
+  const existingTitles = new Set(state.tasks.map((t) => t.title));
+  const newDemoTasks = demoTasks
+    .filter((t) => !existingTitles.has(t.title))
+    .map((t) => ({ ...t, inAutoRoute: false }));
+  const mergedTasks = [...state.tasks, ...newDemoTasks];
+
   commit({
-    tasks: demoTasks,
-    activeTaskId: demoTasks[0].id,
+    tasks: mergedTasks,
+    activeTaskId: state.activeTaskId ?? mergedTasks[0]?.id ?? null,
   }, ['tasks', 'activeTask']);
 }
 

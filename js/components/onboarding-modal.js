@@ -17,7 +17,7 @@ export function openOnboardingModal() {
     class: 'input',
     id: 'onboarding-user-name',
     type: 'text',
-    value: currentName && currentName !== 'Mert' ? currentName : '',
+    value: currentName && currentName !== 'Odak Yolcusu' && currentName !== 'Mert' ? currentName : '',
     placeholder: 'Örn. Yiğit, Melisa, Mert...',
     autocomplete: 'name',
     required: true,
@@ -48,7 +48,7 @@ export function openOnboardingModal() {
     'aria-label': 'Kapat',
     title: 'Kapat',
     onClick: () => {
-      completeOnboarding('Mert');
+      completeOnboarding('Odak Yolcusu');
       close();
     },
   }, icon('x'));
@@ -94,21 +94,22 @@ export function openOnboardingModal() {
   dialog = h('dialog', { class: 'modal onboarding-modal', 'aria-labelledby': 'onboarding-title' }, panel);
   document.body.append(dialog);
 
-  // Dışına tıklama ile kapatma
+  // Dışına tıklama ile kapatma (klavye / programatik tıklamalarda e.detail === 0 olur)
   dialog.addEventListener('click', (e) => {
+    if (e.target !== dialog || e.detail === 0) return;
     const rect = dialog.getBoundingClientRect();
     const isInDialog = (
       rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
       rect.left <= e.clientX && e.clientX <= rect.left + rect.width
     );
     if (!isInDialog) {
-      completeOnboarding('Mert');
+      completeOnboarding('Odak Yolcusu');
       close();
     }
   });
 
   dialog.addEventListener('cancel', () => {
-    completeOnboarding('Mert');
+    completeOnboarding('Odak Yolcusu');
     close();
   });
 
